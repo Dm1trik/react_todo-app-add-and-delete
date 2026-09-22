@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { UserWarning } from './UserWarning';
 import { getTodos, createTodo, USER_ID, deleteTodo } from './api/todos';
 import { NewTodo } from './Components/NewTodo';
@@ -9,17 +9,19 @@ import { Todo } from './types/Todo';
 import { Footer } from './Components/Footer/Footer';
 import { FILTERS } from './types/Filters';
 
-function getPreparedTodos(todos: Todo[], selectedStatus: string) {
+function getFilteredTodos(todos: Todo[], selectedStatus: FILTERS) {
   return todos.filter(todo => {
-    let matchesStatus = true;
+    switch (selectedStatus) {
+      case FILTERS.active:
+        return !todo.completed;
 
-    if (selectedStatus === FILTERS.active) {
-      matchesStatus = !todo.completed;
-    } else if (selectedStatus === FILTERS.completed) {
-      matchesStatus = todo.completed;
+      case FILTERS.completed:
+        return todo.completed;
+
+      case FILTERS.all:
+      default:
+        return true;
     }
-
-    return matchesStatus;
   });
 }
 
@@ -32,7 +34,9 @@ export const App: React.FC = () => {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const visibleTodos = getPreparedTodos(todos, selectedStatus);
+  const visibleTodos = useMemo(() => {
+    return getFilteredTodos(todos, selectedStatus);
+  }, [todos, selectedStatus]);
 
   useEffect(() => {
     setErrorMessage('');
